@@ -4,136 +4,589 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบบันทึกการทำเวรสี - โรงเรียนบ้านวาเล่ย์</title>
-    <!-- ตั้งค่า Favicon ด้วยไฟล์ favicon.ico ตามใน GitHub -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <!-- เรียกใช้ Tailwind CSS ผ่าน CDN สำหรับตกแต่งหน้าเว็บ -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- เรียกใช้ Icon จาก Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
-        body {
-            font-family: 'Sarabun', sans-serif;
-        }
-        /* คลาสสำหรับซ่อนข้อความเมื่อย่อ Sidebar */
-        .sidebar-collapsed .menu-text {
+        body { font-family: 'Sarabun', sans-serif; }
+        
+        /* Mobile Sidebar Overlay */
+        .mobile-overlay {
             display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
         }
-        .sidebar-collapsed {
-            width: 5rem !important; /* 20 * 0.25rem = 5rem */
+        .mobile-overlay.active { display: block; }
+
+        /* Desktop Sidebar State */
+        .sidebar-collapsed .menu-text { display: none; }
+        .sidebar-collapsed { width: 5rem !important; }
+        
+        /* View Management */
+        .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .view-section.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Table adjustments */
+        @media (max-width: 640px) {
+            .mobile-table-card {
+                display: block;
+                border-bottom: 1px solid #f3f4f6;
+                padding: 1rem;
+            }
+            .mobile-table-card:last-child { border-bottom: none; }
+            .desktop-table-header { display: none; }
         }
     </style>
 </head>
-<body class="flex h-screen bg-gray-50 text-gray-800">
+<body class="flex h-screen bg-gray-50 text-gray-800 overflow-hidden">
+
+    <!-- ================= MOCK LOGIN SCREEN ================= -->
+    <div id="login-screen" class="fixed inset-0 bg-blue-900 z-50 flex flex-col items-center justify-center text-white p-4">
+        <img src="logo.png" alt="โลโก้โรงเรียน" class="w-24 h-24 sm:w-32 sm:h-32 mb-6 bg-white rounded-full p-2 shadow-lg object-contain border-4 border-blue-400" onerror="this.src='https://placehold.co/150x150?text=Logo'">
+        <h1 class="text-2xl sm:text-3xl font-bold mb-2 text-center">โรงเรียนบ้านวาเล่ย์</h1>
+        <p class="text-blue-200 mb-8 text-center text-sm sm:text-base">ระบบบันทึกการทำเวรสีประจำวัน</p>
+        
+        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-xl w-full max-w-sm sm:max-w-md text-gray-800">
+            <h2 class="text-lg sm:text-xl font-bold text-center mb-6">เลือกสิทธิ์การเข้าใช้งาน</h2>
+            <div class="space-y-4">
+                <button onclick="login('student')" class="w-full flex items-center justify-center p-3 sm:p-4 bg-blue-100 hover:bg-blue-200 active:bg-blue-300 text-blue-900 rounded-lg font-semibold transition shadow-sm">
+                    <i data-lucide="user" class="mr-2"></i> ประธานสี (ม.3)
+                </button>
+                <button onclick="login('teacher')" class="w-full flex items-center justify-center p-3 sm:p-4 bg-green-100 hover:bg-green-200 active:bg-green-300 text-green-900 rounded-lg font-semibold transition shadow-sm">
+                    <i data-lucide="users" class="mr-2"></i> ครูประจำสี
+                </button>
+                <button onclick="login('admin')" class="w-full flex items-center justify-center p-3 sm:p-4 bg-purple-100 hover:bg-purple-200 active:bg-purple-300 text-purple-900 rounded-lg font-semibold transition shadow-sm">
+                    <i data-lucide="settings" class="mr-2"></i> ผู้ดูแลระบบ (Admin)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN APP ================= -->
+    
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" class="mobile-overlay" onclick="toggleSidebar()"></div>
 
     <!-- Left Sidebar -->
-    <aside id="sidebar" class="bg-blue-900 text-white w-64 transition-all duration-300 flex flex-col flex-shrink-0 shadow-lg">
-        <div class="flex items-center justify-center h-16 border-b border-blue-800">
-            <span class="font-bold text-lg menu-text">เมนูหลัก</span>
-            <i data-lucide="menu" class="hidden w-6 h-6 menu-icon-collapsed"></i>
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 bg-blue-900 text-white w-64 transition-all duration-300 flex flex-col flex-shrink-0 shadow-2xl md:shadow-lg z-50">
+        <div class="flex items-center justify-between md:justify-center h-16 px-4 md:px-0 border-b border-blue-800">
+            <span class="font-bold text-lg menu-text truncate">เมนูหลัก</span>
+            <!-- Close button for mobile -->
+            <button onclick="toggleSidebar()" class="md:hidden p-2 text-white hover:bg-blue-800 rounded-lg">
+                <i data-lucide="x"></i>
+            </button>
         </div>
-        <nav class="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
-            <a href="#" class="flex items-center p-3 rounded-lg bg-blue-800 hover:bg-blue-700 transition-colors">
-                <i data-lucide="home" class="min-w-[24px]"></i>
-                <span class="ml-3 menu-text font-medium">หน้าแรก</span>
-            </a>
-            <a href="#" class="flex items-center p-3 rounded-lg hover:bg-blue-800 transition-colors">
-                <i data-lucide="check-square" class="min-w-[24px]"></i>
-                <span class="ml-3 menu-text font-medium">เช็คชื่อเวรสี</span>
-            </a>
-            <a href="#" class="flex items-center p-3 rounded-lg hover:bg-blue-800 transition-colors">
-                <i data-lucide="clipboard-list" class="min-w-[24px]"></i>
-                <span class="ml-3 menu-text font-medium">ประวัติการทำเวร</span>
-            </a>
+        
+        <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
+            <!-- เมนูถูกสร้างด้วย JavaScript -->
         </nav>
+
         <div class="p-4 border-t border-blue-800">
-            <button class="flex items-center w-full p-3 rounded-lg hover:bg-red-600 transition-colors text-left">
-                <i data-lucide="log-out" class="min-w-[24px]"></i>
-                <span class="ml-3 menu-text font-medium">ออกจากระบบ</span>
+            <button onclick="logout()" class="flex items-center w-full p-3 rounded-lg hover:bg-red-600 transition-colors text-left group">
+                <i data-lucide="log-out" class="min-w-[24px] group-hover:scale-110 transition-transform"></i>
+                <span class="ml-3 menu-text font-medium truncate">ออกจากระบบ</span>
             </button>
         </div>
     </aside>
 
     <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="main-content" class="flex-1 flex flex-col min-w-0 bg-gray-50">
         
         <!-- Header -->
-        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-6 z-10">
-            <div class="flex items-center">
-                <!-- ปุ่มย่อ/ขยาย Sidebar -->
-                <button onclick="toggleSidebar()" class="p-2 mr-4 text-blue-900 hover:bg-gray-100 rounded-lg transition-colors">
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-6 z-10 flex-shrink-0 sticky top-0">
+            <div class="flex items-center min-w-0">
+                <button onclick="toggleSidebar()" class="p-2 mr-2 md:mr-4 text-blue-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <i data-lucide="menu"></i>
                 </button>
-                
-                <!-- โลโก้โรงเรียน แก้ไขชื่อไฟล์เป็น logo.png ตามใน GitHub -->
-                <img src="logo.png" alt="โลโก้โรงเรียนบ้านวาเล่ย์" class="h-10 w-10 object-contain mr-3 rounded-full border border-gray-200">
-                
-                <h1 class="text-lg lg:text-xl font-bold text-blue-900 hidden sm:block">
-                    ระบบบันทึกการทำเวรสี โรงเรียนบ้านวาเล่ย์
+                <img src="logo.png" alt="โลโก้" class="h-8 w-8 sm:h-10 sm:w-10 object-contain mr-2 sm:mr-3 rounded-full border border-gray-200 flex-shrink-0" onerror="this.src='https://placehold.co/150x150?text=Logo'">
+                <h1 class="text-base sm:text-lg lg:text-xl font-bold text-blue-900 truncate">
+                    ระบบเวรสี <span class="hidden sm:inline">โรงเรียนบ้านวาเล่ย์</span>
                 </h1>
             </div>
             
-            <!-- User Profile -->
-            <div class="flex items-center">
-                <div class="text-right mr-3 hidden sm:block">
-                    <div class="text-sm font-bold text-blue-900">นายสมชาย รักสะอาด</div>
-                    <div class="text-xs text-gray-500">ประธานสีน้ำเงิน (ม.3)</div>
+            <div class="flex items-center flex-shrink-0 ml-4">
+                <div class="text-right mr-3 hidden md:block">
+                    <div id="user-name" class="text-sm font-bold text-blue-900">ชื่อผู้ใช้</div>
+                    <div id="user-role" class="text-xs text-gray-500">ตำแหน่ง</div>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-blue-100 border-2 border-blue-900 flex items-center justify-center text-blue-900 font-bold">
-                    ส.
+                <div id="user-avatar" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 border-2 border-blue-900 flex items-center justify-center text-blue-900 font-bold text-sm sm:text-base">
+                    U
                 </div>
             </div>
         </header>
 
-        <!-- Dynamic Content (ตัวอย่างหน้าจอหลัก) -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 lg:p-8">
-            <div class="max-w-4xl mx-auto">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-2">ยินดีต้อนรับ, ประธานสีน้ำเงิน</h2>
-                    <p class="text-gray-600">กรุณาเลือกเมนู "เช็คชื่อเวรสี" ที่แถบด้านซ้าย เพื่อเริ่มต้นการบันทึกการทำความสะอาดประจำวัน</p>
-                </div>
-
-                <!-- การ์ดสรุปข้อมูล -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
-                        <div class="text-sm text-gray-500 mb-1">สมาชิกในสีทั้งหมด</div>
-                        <div class="text-3xl font-bold text-blue-900">45 <span class="text-base font-normal text-gray-500">คน</span></div>
+        <!-- Dynamic Content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 scroll-smooth">
+            <div class="max-w-7xl mx-auto w-full pb-20"> <!-- Added padding bottom for mobile scrolling -->
+                
+                <!-- ================= 1. STUDENT DASHBOARD ================= -->
+                <div id="view-student-dash" class="view-section">
+                    <div class="bg-gradient-to-r from-blue-900 to-blue-700 rounded-2xl shadow-lg p-6 sm:p-8 mb-6 text-white">
+                        <h2 class="text-xl sm:text-2xl font-bold mb-2">สวัสดี, <span id="dash-student-name">ประธานสีน้ำเงิน</span> 👋</h2>
+                        <p class="text-blue-100 text-sm sm:text-base mb-6">วันนี้คุณยังไม่ได้ส่งรายงานการทำเวร กรุณาดำเนินการเพื่อรักษาความสะอาดของโรงเรียนเรา</p>
+                        <button onclick="switchView('view-student-checkin')" class="w-full sm:w-auto bg-white text-blue-900 hover:bg-gray-50 px-6 py-3 rounded-xl font-bold shadow-md flex items-center justify-center transition-transform active:scale-95">
+                            <i data-lucide="clipboard-check" class="mr-2 w-5 h-5"></i> ไปหน้าเช็คชื่อทันที
+                        </button>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-green-500">
-                        <div class="text-sm text-gray-500 mb-1">สถานะการส่งเวรวันนี้</div>
-                        <div class="text-lg font-bold text-green-600 mt-2 flex items-center">
-                            <i data-lucide="check-circle" class="w-5 h-5 mr-2"></i> ยังไม่ได้ดำเนินการ
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-4">
+                                <i data-lucide="users" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">สมาชิกในสี</div>
+                                <div class="text-2xl font-bold text-gray-800">45 <span class="text-sm font-normal text-gray-500">คน</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center">
+                            <div class="w-12 h-12 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center mr-4">
+                                <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">สถานะวันนี้</div>
+                                <div class="text-lg font-bold text-orange-500">ยังไม่ส่งเวร</div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center sm:col-span-2 lg:col-span-1">
+                            <div class="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-4">
+                                <i data-lucide="map-pin" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">พื้นที่รับผิดชอบ</div>
+                                <div class="text-lg font-bold text-gray-800 truncate">ลานอเนกประสงค์</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-purple-500">
-                        <div class="text-sm text-gray-500 mb-1">พื้นที่รับผิดชอบ</div>
-                        <div class="text-lg font-bold text-gray-800 mt-2">ลานอเนกประสงค์</div>
+                </div>
+
+                <!-- ================= 2. STUDENT CHECK-IN PAGE ================= -->
+                <div id="view-student-checkin" class="view-section max-w-4xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                        <h2 class="text-xl sm:text-2xl font-bold text-blue-900 flex items-center">
+                            <i data-lucide="check-square" class="mr-2 text-blue-600"></i> เช็คชื่อเวร: สีน้ำเงิน
+                        </h2>
+                        <span class="bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold shadow-sm w-full sm:w-auto text-center" id="current-date"></span>
+                    </div>
+
+                    <!-- รายชื่อนักเรียน (Responsive List/Table) -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                        <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                            <span class="font-bold text-gray-700">รายชื่อนักเรียน (ป.1 - ม.3)</span>
+                            <span class="text-xs sm:text-sm bg-gray-200 text-gray-600 px-2 py-1 rounded-md">3 คน</span>
+                        </div>
+                        
+                        <div class="divide-y divide-gray-100">
+                            <!-- Person 1 -->
+                            <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
+                                <div>
+                                    <div class="font-semibold text-gray-800 text-base">ด.ช. รักเรียน หมั่นเพียร</div>
+                                    <div class="text-sm text-gray-500 mt-1 flex items-center"><i data-lucide="graduation-cap" class="w-4 h-4 mr-1"></i> ชั้น ป.1</div>
+                                </div>
+                                <div class="flex w-full sm:w-auto bg-gray-100 rounded-lg p-1 space-x-1">
+                                    <button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-bold bg-green-500 text-white shadow-sm transition">มา</button>
+                                    <button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">ขาด</button>
+                                    <button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">ลา</button>
+                                </div>
+                            </div>
+                            <!-- Person 2 -->
+                            <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
+                                <div>
+                                    <div class="font-semibold text-gray-800 text-base">ด.ญ. ใฝ่รู้ สู้ชิวิต</div>
+                                    <div class="text-sm text-gray-500 mt-1 flex items-center"><i data-lucide="graduation-cap" class="w-4 h-4 mr-1"></i> ชั้น ป.4</div>
+                                </div>
+                                <div class="flex w-full sm:w-auto bg-gray-100 rounded-lg p-1 space-x-1">
+                                    <button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">มา</button>
+                                    <button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-bold bg-red-500 text-white shadow-sm transition">ขาด</button>
+                                    <button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">ลา</button>
+                                </div>
+                            </div>
+                             <!-- Person 3 -->
+                             <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
+                                <div>
+                                    <div class="font-semibold text-gray-800 text-base">นาย สมเกียรติ ยิ่งใหญ่</div>
+                                    <div class="text-sm text-gray-500 mt-1 flex items-center"><i data-lucide="graduation-cap" class="w-4 h-4 mr-1"></i> ชั้น ม.2</div>
+                                </div>
+                                <div class="flex w-full sm:w-auto bg-gray-100 rounded-lg p-1 space-x-1">
+                                    <button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-bold bg-green-500 text-white shadow-sm transition">มา</button>
+                                    <button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">ขาด</button>
+                                    <button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">ลา</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- อัปโหลดรูป -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 mb-6">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center"><i data-lucide="camera" class="mr-2 w-5 h-5 text-blue-600"></i> ภาพถ่ายสถานที่หลังทำความสะอาด</h3>
+                        <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-10 text-center bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition cursor-pointer group">
+                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm group-hover:scale-110 transition-transform">
+                                <i data-lucide="camera" class="h-8 w-8 text-blue-500"></i>
+                            </div>
+                            <p class="text-gray-800 font-bold mb-1 text-sm sm:text-base">แตะเพื่อถ่ายรูป / อัปโหลด</p>
+                            <p class="text-xs sm:text-sm text-gray-500">แนบรูปภาพเพื่อเป็นหลักฐาน (สูงสุด 3 รูป)</p>
+                            <input type="file" class="hidden" accept="image/*" capture="environment">
+                        </div>
+                    </div>
+
+                    <button onclick="alert('ส่งรายงานเรียบร้อยแล้ว'); switchView('view-student-dash')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center text-lg sm:text-xl transition-transform active:scale-95 sticky bottom-4 z-20">
+                        <i data-lucide="send" class="mr-2"></i> ส่งรายงานการทำเวร
+                    </button>
+                </div>
+
+                <!-- ================= 3. TEACHER DASHBOARD ================= -->
+                <div id="view-teacher-dash" class="view-section">
+                    <h2 class="text-xl sm:text-2xl font-bold text-blue-900 mb-4 sm:mb-6 flex items-center">
+                        <i data-lucide="layout-dashboard" class="mr-2"></i> แดชบอร์ดครูประจำสี
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+                        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+                            <div class="p-4 sm:p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                                <h3 class="font-bold text-gray-800">รายงานเวรวันนี้</h3>
+                                <span class="bg-orange-100 text-orange-700 px-2.5 py-0.5 rounded-full text-xs font-bold">รอตรวจ 1</span>
+                            </div>
+                            
+                            <div class="p-4 sm:p-6 flex-1">
+                                <div class="bg-white border-2 border-blue-100 rounded-xl p-4 sm:p-5 hover:border-blue-300 transition-colors shadow-sm">
+                                    <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                                        <div class="w-full">
+                                            <div class="flex justify-between items-start mb-2">
+                                                <div class="font-bold text-blue-900 text-base sm:text-lg">พื้นที่: ลานอเนกประสงค์</div>
+                                                <span class="sm:hidden bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">สีน้ำเงิน</span>
+                                            </div>
+                                            <div class="text-sm text-gray-600 mb-3 space-y-1">
+                                                <div class="flex items-center"><i data-lucide="user" class="w-4 h-4 mr-2 text-gray-400"></i> ส่งโดย: นายสมชาย (ม.3)</div>
+                                                <div class="flex items-center"><i data-lucide="clock" class="w-4 h-4 mr-2 text-gray-400"></i> เวลา: 07:45 น.</div>
+                                            </div>
+                                            
+                                            <div class="flex space-x-3 mb-4 sm:mb-0">
+                                                <div class="bg-green-50 px-3 py-1.5 rounded-lg border border-green-100 text-center flex-1 sm:flex-none">
+                                                    <div class="text-xs text-green-600 font-medium">มา</div>
+                                                    <div class="font-bold text-green-700">42</div>
+                                                </div>
+                                                <div class="bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 text-center flex-1 sm:flex-none">
+                                                    <div class="text-xs text-red-600 font-medium">ขาด</div>
+                                                    <div class="font-bold text-red-700">1</div>
+                                                </div>
+                                                <div class="bg-yellow-50 px-3 py-1.5 rounded-lg border border-yellow-100 text-center flex-1 sm:flex-none">
+                                                    <div class="text-xs text-yellow-600 font-medium">ลา</div>
+                                                    <div class="font-bold text-yellow-700">2</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <button class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-md flex items-center justify-center flex-shrink-0 transition-transform active:scale-95">
+                                            <i data-lucide="search" class="w-4 h-4 mr-2"></i> ตรวจรายงาน
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+                            <div class="p-4 sm:p-5 border-b bg-gray-50 rounded-t-2xl">
+                                <h3 class="font-bold text-gray-800">สถิติสัปดาห์นี้</h3>
+                            </div>
+                            <div class="p-5 sm:p-6 space-y-5">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1.5">
+                                        <span class="text-gray-600 font-medium">มาทำเวรเฉลี่ย</span>
+                                        <span class="font-bold text-green-600">95%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2.5 shadow-inner">
+                                        <div class="bg-green-500 h-2.5 rounded-full" style="width: 95%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1.5">
+                                        <span class="text-gray-600 font-medium">ขาดเวรเฉลี่ย</span>
+                                        <span class="font-bold text-red-600">2%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2.5 shadow-inner">
+                                        <div class="bg-red-500 h-2.5 rounded-full" style="width: 2%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <div class="text-sm text-blue-800 font-bold mb-1">ข้อเสนอแนะระบบ:</div>
+                                    <p class="text-xs text-blue-600">สถิติการมาทำเวรของสีอยู่ในเกณฑ์ดีเยี่ยม</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- ================= 4. ADMIN DASHBOARD ================= -->
+                <div id="view-admin-dash" class="view-section">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold text-blue-900 flex items-center">
+                                <i data-lucide="bar-chart-2" class="mr-2"></i> ภาพรวมระดับโรงเรียน
+                            </h2>
+                            <p class="text-gray-600 text-sm sm:text-base mt-1">ข้อมูลประจำวันที่ <span id="admin-date" class="font-semibold"></span></p>
+                        </div>
+                        <button class="w-full sm:w-auto bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center hover:bg-gray-50 shadow-sm transition">
+                            <i data-lucide="download" class="w-4 h-4 mr-2"></i> ออกรายงาน PDF
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
+                            <div class="w-10 h-10 mx-auto bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-2">
+                                <i data-lucide="users" class="w-5 h-5"></i>
+                            </div>
+                            <div class="text-gray-500 text-xs sm:text-sm mb-1">นักเรียนทั้งหมด</div>
+                            <div class="text-xl sm:text-2xl font-bold text-blue-900">350</div>
+                        </div>
+                        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
+                            <div class="w-10 h-10 mx-auto bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-2">
+                                <i data-lucide="palette" class="w-5 h-5"></i>
+                            </div>
+                            <div class="text-gray-500 text-xs sm:text-sm mb-1">กลุ่มสี</div>
+                            <div class="text-xl sm:text-2xl font-bold text-purple-600">4</div>
+                        </div>
+                        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
+                            <div class="w-10 h-10 mx-auto bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-2">
+                                <i data-lucide="check-circle" class="w-5 h-5"></i>
+                            </div>
+                            <div class="text-gray-500 text-xs sm:text-sm mb-1">ส่งเวรแล้ววันนี้</div>
+                            <div class="text-xl sm:text-2xl font-bold text-green-600">2<span class="text-sm text-gray-400 font-normal">/4</span></div>
+                        </div>
+                        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
+                            <div class="w-10 h-10 mx-auto bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-2">
+                                <i data-lucide="x-circle" class="w-5 h-5"></i>
+                            </div>
+                            <div class="text-gray-500 text-xs sm:text-sm mb-1">ขาดเวรวันนี้</div>
+                            <div class="text-xl sm:text-2xl font-bold text-red-600">5</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 sm:p-5 border-b bg-gray-50 font-bold text-gray-800 flex justify-between items-center">
+                            <span>สถานะการส่งเวร (วันนี้)</span>
+                            <span class="bg-white border text-xs px-2 py-1 rounded text-gray-600"><i data-lucide="refresh-cw" class="w-3 h-3 inline mr-1"></i> Live</span>
+                        </div>
+                        
+                        <!-- Desktop Table View -->
+                        <div class="hidden md:block overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-sm text-gray-500 border-b bg-white">
+                                        <th class="p-4 font-semibold">กลุ่มสี</th>
+                                        <th class="p-4 font-semibold">พื้นที่รับผิดชอบ</th>
+                                        <th class="p-4 font-semibold">ประธานสี (ผู้ส่ง)</th>
+                                        <th class="p-4 font-semibold">สถานะส่งงาน</th>
+                                        <th class="p-4 font-semibold">การตรวจ (ครู)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 bg-white">
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="p-4 font-bold text-blue-700 flex items-center"><div class="w-3 h-3 rounded-full bg-blue-600 mr-2"></div> สีน้ำเงิน</td>
+                                        <td class="p-4 text-sm text-gray-600">ลานอเนกประสงค์</td>
+                                        <td class="p-4 text-sm">นายสมชาย (ม.3)</td>
+                                        <td class="p-4"><span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-md text-xs font-bold border border-green-200">ส่งแล้ว</span></td>
+                                        <td class="p-4"><span class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-md text-xs font-bold border border-yellow-200">รอตรวจ</span></td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="p-4 font-bold text-red-600 flex items-center"><div class="w-3 h-3 rounded-full bg-red-600 mr-2"></div> สีแดง</td>
+                                        <td class="p-4 text-sm text-gray-600">โรงอาหาร</td>
+                                        <td class="p-4 text-sm">ด.ญ.มาลี (ม.3)</td>
+                                        <td class="p-4"><span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-md text-xs font-bold border border-green-200">ส่งแล้ว</span></td>
+                                        <td class="p-4"><span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-md text-xs font-bold border border-green-200">ผ่านแล้ว</span></td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="p-4 font-bold text-yellow-600 flex items-center"><div class="w-3 h-3 rounded-full bg-yellow-400 mr-2"></div> สีเหลือง</td>
+                                        <td class="p-4 text-sm text-gray-600">หน้าเสาธง</td>
+                                        <td class="p-4 text-sm text-gray-400">-</td>
+                                        <td class="p-4"><span class="bg-gray-100 text-gray-500 px-2.5 py-1 rounded-md text-xs font-bold border border-gray-200">ยังไม่ส่ง</span></td>
+                                        <td class="p-4 text-gray-400 text-sm">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Mobile Card View -->
+                        <div class="md:hidden divide-y divide-gray-100 bg-white">
+                            <!-- Card 1 -->
+                            <div class="p-4 hover:bg-gray-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <div class="font-bold text-blue-700 flex items-center"><div class="w-3 h-3 rounded-full bg-blue-600 mr-2"></div> สีน้ำเงิน</div>
+                                    <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold border border-green-200">ส่งแล้ว</span>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">ลานอเนกประสงค์</div>
+                                <div class="flex justify-between items-end">
+                                    <div class="text-xs text-gray-500">นายสมชาย (ม.3)</div>
+                                    <span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-bold border border-yellow-200">ครู: รอตรวจ</span>
+                                </div>
+                            </div>
+                            <!-- Card 2 -->
+                            <div class="p-4 hover:bg-gray-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <div class="font-bold text-red-600 flex items-center"><div class="w-3 h-3 rounded-full bg-red-600 mr-2"></div> สีแดง</div>
+                                    <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold border border-green-200">ส่งแล้ว</span>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">โรงอาหาร</div>
+                                <div class="flex justify-between items-end">
+                                    <div class="text-xs text-gray-500">ด.ญ.มาลี (ม.3)</div>
+                                    <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold border border-green-200">ครู: ผ่านแล้ว</span>
+                                </div>
+                            </div>
+                            <!-- Card 3 -->
+                            <div class="p-4 hover:bg-gray-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <div class="font-bold text-yellow-600 flex items-center"><div class="w-3 h-3 rounded-full bg-yellow-400 mr-2"></div> สีเหลือง</div>
+                                    <span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-xs font-bold border border-gray-200">ยังไม่ส่ง</span>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">หน้าเสาธง</div>
+                                <div class="flex justify-between items-end">
+                                    <div class="text-xs text-gray-400">-</div>
+                                    <span class="text-xs text-gray-400">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
-
-        <!-- Footer -->
-        <footer class="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500">
-            &copy; 2026 โรงเรียนบ้านวาเล่ย์. สงวนลิขสิทธิ์.
-        </footer>
     </div>
 
-    <!-- Script ควบคุมการทำงานเบื้องต้น -->
     <script>
-        // เริ่มต้นการใช้งาน Lucide Icons
-        lucide.createIcons();
+        // Set Dates
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const today = new Date().toLocaleDateString('th-TH', options);
+        document.getElementById('current-date').innerText = today;
+        document.getElementById('admin-date').innerText = today;
 
-        // ฟังก์ชันสำหรับ ย่อ/ขยาย Sidebar
+        // เมนูสำหรับแต่ละ Role
+        const menus = {
+            student: `
+                <a href="#" onclick="switchView('view-student-dash'); if(window.innerWidth < 768) toggleSidebar();" class="flex items-center p-3 mx-2 rounded-xl hover:bg-blue-800 transition-colors group">
+                    <i data-lucide="home" class="min-w-[24px] text-blue-300 group-hover:text-white transition-colors"></i>
+                    <span class="ml-3 menu-text font-medium">หน้าแรก</span>
+                </a>
+                <a href="#" onclick="switchView('view-student-checkin'); if(window.innerWidth < 768) toggleSidebar();" class="flex items-center p-3 mx-2 rounded-xl hover:bg-blue-800 transition-colors group">
+                    <i data-lucide="check-square" class="min-w-[24px] text-blue-300 group-hover:text-white transition-colors"></i>
+                    <span class="ml-3 menu-text font-medium">เช็คชื่อเวรสี</span>
+                </a>
+                <a href="#" class="flex items-center p-3 mx-2 rounded-xl hover:bg-blue-800 transition-colors group">
+                    <i data-lucide="history" class="min-w-[24px] text-blue-300 group-hover:text-white transition-colors"></i>
+                    <span class="ml-3 menu-text font-medium">ประวัติย้อนหลัง</span>
+                </a>
+            `,
+            teacher: `
+                <a href="#" onclick="switchView('view-teacher-dash'); if(window.innerWidth < 768) toggleSidebar();" class="flex items-center p-3 mx-2 rounded-xl hover:bg-blue-800 transition-colors group">
+                    <i data-lucide="inbox" class="min-w-[24px] text-blue-300 group-hover:text-white transition-colors"></i>
+                    <span class="ml-3 menu-text font-medium">รอตรวจรับเวร</span>
+                </a>
+                <a href="#" class="flex items-center p-3 mx-2 rounded-xl hover:bg-blue-800 transition-colors group">
+                    <i data-lucide="file-bar-chart" class="min-w-[24px] text-blue-300 group-hover:text-white transition-colors"></i>
+                    <span class="ml-3 menu-text font-medium">รายงานสถิติสี</span>
+                </a>
+            `,
+            admin: `
+                <a href="#" onclick="switchView('view-admin-dash'); if(window.innerWidth < 768) toggleSidebar();" class="flex items-center p-3 mx-2 rounded-xl hover:bg-blue-800 transition-colors group">
+                    <i data-lucide="pie-chart" class="min-w-[24px] text-blue-300 group-hover:text-white transition-colors"></i>
+                    <span class="ml-3 menu-text font-medium">ภาพรวมโรงเรียน</span>
+                </a>
+                <a href="#" class="flex items-center p-3 mx-2 rounded-xl hover:bg-blue-800 transition-colors group">
+                    <i data-lucide="users" class="min-w-[24px] text-blue-300 group-hover:text-white transition-colors"></i>
+                    <span class="ml-3 menu-text font-medium">จัดการบุคลากร</span>
+                </a>
+                <a href="#" class="flex items-center p-3 mx-2 rounded-xl hover:bg-blue-800 transition-colors group">
+                    <i data-lucide="settings" class="min-w-[24px] text-blue-300 group-hover:text-white transition-colors"></i>
+                    <span class="ml-3 menu-text font-medium">ตั้งค่าระบบ</span>
+                </a>
+            `
+        };
+
+        function login(role) {
+            document.getElementById('login-screen').style.display = 'none';
+            
+            const nav = document.getElementById('sidebar-nav');
+            
+            if (role === 'student') {
+                document.getElementById('user-name').innerText = 'สมชาย รักสะอาด';
+                document.getElementById('user-role').innerText = 'ประธานสีน้ำเงิน';
+                document.getElementById('user-avatar').innerText = 'ส';
+                nav.innerHTML = menus.student;
+                switchView('view-student-dash');
+            } else if (role === 'teacher') {
+                document.getElementById('user-name').innerText = 'ครูใจดี มีเมตตา';
+                document.getElementById('user-role').innerText = 'ครูประจำสีน้ำเงิน';
+                document.getElementById('user-avatar').innerText = 'จ';
+                nav.innerHTML = menus.teacher;
+                switchView('view-teacher-dash');
+            } else if (role === 'admin') {
+                document.getElementById('user-name').innerText = 'ผู้ดูแลระบบ';
+                document.getElementById('user-role').innerText = 'Admin';
+                document.getElementById('user-avatar').innerText = 'A';
+                nav.innerHTML = menus.admin;
+                switchView('view-admin-dash');
+            }
+            
+            lucide.createIcons();
+        }
+
+        function logout() {
+            if(window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('mobile-overlay').classList.remove('active');
+            }
+            document.getElementById('login-screen').style.display = 'flex';
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            lucide.createIcons();
+            
+            // Scroll to top when switching views
+            document.querySelector('main').scrollTo(0, 0);
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('sidebar-collapsed');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            if (window.innerWidth < 768) {
+                // Mobile behavior: slide in/out
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('active');
+            } else {
+                // Desktop behavior: collapse/expand
+                sidebar.classList.toggle('sidebar-collapsed');
+            }
         }
 
-        // ทำให้ Sidebar ย่ออัตโนมัติเมื่อเปิดบนมือถือ
-        if (window.innerWidth < 768) {
-            document.getElementById('sidebar').classList.add('sidebar-collapsed');
-        }
+        // Handle resize events
+        window.addEventListener('resize', () => {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            if (window.innerWidth >= 768) {
+                // Reset mobile states when moving to desktop
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('active');
+            } else {
+                // Reset desktop states when moving to mobile
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('active');
+            }
+        });
+
+        // Initialize Icons on load just in case
+        lucide.createIcons();
     </script>
 </body>
 </html>
