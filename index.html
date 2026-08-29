@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกการทำเวรสี - โรงเรียนบ้านวาเล่ย์</title>
+    <!-- ตั้งค่า Favicon ด้วยไฟล์ logo.jpg -->
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <!-- เรียกใช้ Tailwind CSS ผ่าน CDN สำหรับตกแต่งหน้าเว็บ -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- เรียกใช้ Icon จาก Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+        /* คลาสสำหรับซ่อนข้อความเมื่อย่อ Sidebar */
+        .sidebar-collapsed .menu-text {
+            display: none;
+        }
+        .sidebar-collapsed {
+            width: 5rem !important; /* 20 * 0.25rem = 5rem */
+        }
+    </style>
+</head>
+<body class="flex h-screen bg-gray-50 text-gray-800">
+
+    <!-- Left Sidebar -->
+    <aside id="sidebar" class="bg-blue-900 text-white w-64 transition-all duration-300 flex flex-col flex-shrink-0 shadow-lg">
+        <div class="flex items-center justify-center h-16 border-b border-blue-800">
+            <span class="font-bold text-lg menu-text">เมนูหลัก</span>
+            <i data-lucide="menu" class="hidden w-6 h-6 menu-icon-collapsed"></i>
+        </div>
+        <nav class="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
+            <a href="#" class="flex items-center p-3 rounded-lg bg-blue-800 hover:bg-blue-700 transition-colors">
+                <i data-lucide="home" class="min-w-[24px]"></i>
+                <span class="ml-3 menu-text font-medium">หน้าแรก</span>
+            </a>
+            <a href="#" class="flex items-center p-3 rounded-lg hover:bg-blue-800 transition-colors">
+                <i data-lucide="check-square" class="min-w-[24px]"></i>
+                <span class="ml-3 menu-text font-medium">เช็คชื่อเวรสี</span>
+            </a>
+            <a href="#" class="flex items-center p-3 rounded-lg hover:bg-blue-800 transition-colors">
+                <i data-lucide="clipboard-list" class="min-w-[24px]"></i>
+                <span class="ml-3 menu-text font-medium">ประวัติการทำเวร</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-blue-800">
+            <button class="flex items-center w-full p-3 rounded-lg hover:bg-red-600 transition-colors text-left">
+                <i data-lucide="log-out" class="min-w-[24px]"></i>
+                <span class="ml-3 menu-text font-medium">ออกจากระบบ</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- Header -->
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-6 z-10">
+            <div class="flex items-center">
+                <!-- ปุ่มย่อ/ขยาย Sidebar -->
+                <button onclick="toggleSidebar()" class="p-2 mr-4 text-blue-900 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i data-lucide="menu"></i>
+                </button>
+                
+                <!-- โลโก้โรงเรียน -->
+                <img src="logo.jpg" alt="โลโก้โรงเรียนบ้านวาเล่ย์" class="h-10 w-10 object-contain mr-3 rounded-full border border-gray-200">
+                
+                <h1 class="text-lg lg:text-xl font-bold text-blue-900 hidden sm:block">
+                    ระบบบันทึกการทำเวรสี โรงเรียนบ้านวาเล่ย์
+                </h1>
+            </div>
+            
+            <!-- User Profile -->
+            <div class="flex items-center">
+                <div class="text-right mr-3 hidden sm:block">
+                    <div class="text-sm font-bold text-blue-900">นายสมชาย รักสะอาด</div>
+                    <div class="text-xs text-gray-500">ประธานสีน้ำเงิน (ม.3)</div>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-blue-100 border-2 border-blue-900 flex items-center justify-center text-blue-900 font-bold">
+                    ส.
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content (ตัวอย่างหน้าจอหลัก) -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 lg:p-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-blue-900 mb-2">ยินดีต้อนรับ, ประธานสีน้ำเงิน</h2>
+                    <p class="text-gray-600">กรุณาเลือกเมนู "เช็คชื่อเวรสี" ที่แถบด้านซ้าย เพื่อเริ่มต้นการบันทึกการทำความสะอาดประจำวัน</p>
+                </div>
+
+                <!-- การ์ดสรุปข้อมูล -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
+                        <div class="text-sm text-gray-500 mb-1">สมาชิกในสีทั้งหมด</div>
+                        <div class="text-3xl font-bold text-blue-900">45 <span class="text-base font-normal text-gray-500">คน</span></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-green-500">
+                        <div class="text-sm text-gray-500 mb-1">สถานะการส่งเวรวันนี้</div>
+                        <div class="text-lg font-bold text-green-600 mt-2 flex items-center">
+                            <i data-lucide="check-circle" class="w-5 h-5 mr-2"></i> ยังไม่ได้ดำเนินการ
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-purple-500">
+                        <div class="text-sm text-gray-500 mb-1">พื้นที่รับผิดชอบ</div>
+                        <div class="text-lg font-bold text-gray-800 mt-2">ลานอเนกประสงค์</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500">
+            &copy; 2026 โรงเรียนบ้านวาเล่ย์. สงวนลิขสิทธิ์.
+        </footer>
+    </div>
+
+    <!-- Script ควบคุมการทำงานเบื้องต้น -->
+    <script>
+        // เริ่มต้นการใช้งาน Lucide Icons
+        lucide.createIcons();
+
+        // ฟังก์ชันสำหรับ ย่อ/ขยาย Sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('sidebar-collapsed');
+        }
+
+        // ทำให้ Sidebar ย่ออัตโนมัติเมื่อเปิดบนมือถือ
+        if (window.innerWidth < 768) {
+            document.getElementById('sidebar').classList.add('sidebar-collapsed');
+        }
+    </script>
+</body>
+</html>
