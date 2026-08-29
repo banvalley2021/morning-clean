@@ -79,27 +79,28 @@
         </aside>
 
         <div id="main-content" class="flex-1 flex flex-col min-w-0 bg-gray-50 h-full">
-            <header class="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-6 z-10 flex-shrink-0 sticky top-0">
+            <!-- HEADER ปรับเป็นสีน้ำเงิน -->
+            <header class="h-16 bg-blue-900 shadow-md flex items-center justify-between px-4 lg:px-6 z-10 flex-shrink-0 sticky top-0 border-b border-blue-800">
                 <div class="flex items-center min-w-0">
-                    <button onclick="toggleSidebar()" class="p-2 mr-2 md:mr-4 text-blue-900 hover:bg-gray-100 rounded-lg transition-colors"><i data-lucide="menu"></i></button>
-                    <img src="logo.png" alt="โลโก้" class="h-8 w-8 sm:h-10 sm:w-10 object-contain mr-2 sm:mr-3 rounded-full border border-gray-200" onerror="this.src='https://placehold.co/150x150?text=Logo'">
-                    <h1 class="text-base sm:text-lg lg:text-xl font-bold text-blue-900 truncate">ระบบเวรสี โรงเรียนบ้านวาเล่ย์</h1>
+                    <button onclick="toggleSidebar()" class="p-2 mr-2 md:mr-4 text-white hover:bg-blue-800 rounded-lg transition-colors"><i data-lucide="menu"></i></button>
+                    <img src="logo.png" alt="โลโก้" class="h-8 w-8 sm:h-10 sm:w-10 object-contain mr-2 sm:mr-3 rounded-full border-2 border-white bg-white" onerror="this.src='https://placehold.co/150x150?text=Logo'">
+                    <h1 class="text-base sm:text-lg lg:text-xl font-bold text-white truncate">ระบบเวรสี โรงเรียนบ้านวาเล่ย์</h1>
                 </div>
                 <div class="flex items-center flex-shrink-0 ml-4">
                     <div class="text-right mr-3 hidden md:block">
-                        <div id="user-name" class="text-sm font-bold text-blue-900">ชื่อผู้ใช้</div>
-                        <div id="user-role" class="text-xs text-gray-500">ตำแหน่ง</div>
+                        <div id="user-name" class="text-sm font-bold text-white">ชื่อผู้ใช้</div>
+                        <div id="user-role" class="text-xs text-blue-200">ตำแหน่ง</div>
                     </div>
-                    <div id="user-avatar" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 border-2 border-blue-900 flex items-center justify-center text-blue-900 font-bold">U</div>
+                    <div id="user-avatar" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-blue-300 flex items-center justify-center text-blue-900 font-bold">U</div>
                 </div>
             </header>
 
-            <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
-                <div class="max-w-7xl mx-auto w-full pb-20">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 flex flex-col">
+                <div class="max-w-7xl mx-auto w-full pb-8 flex-1">
                     
                     <!-- ================= VIEW: STUDENT (ประธานสี) ================= -->
                     <div id="view-student-dash" class="view-section">
-                        <div class="bg-gradient-to-r from-blue-900 to-blue-700 rounded-2xl shadow-lg p-6 sm:p-8 mb-6 text-white">
+                        <div class="bg-gradient-to-r from-blue-800 to-blue-600 rounded-2xl shadow-lg p-6 sm:p-8 mb-6 text-white border border-blue-700">
                             <h2 class="text-xl sm:text-2xl font-bold mb-2">สวัสดี, ประธานสีน้ำเงิน 👋</h2>
                             <p class="text-blue-100 text-sm sm:text-base mb-6">วันนี้คุณยังไม่ได้ส่งรายงานการทำเวร กรุณาดำเนินการเช็คชื่อน้องๆ ในสี</p>
                             <button onclick="switchView('view-student-checkin')" class="w-full sm:w-auto bg-white text-blue-900 hover:bg-gray-50 px-6 py-3 rounded-xl font-bold shadow-md flex items-center justify-center transition-transform active:scale-95">
@@ -118,6 +119,14 @@
                             <div class="divide-y divide-gray-100">
                                 <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
                                     <div><div class="font-semibold text-gray-800 text-base">ด.ช. รักเรียน หมั่นเพียร</div><div class="text-sm text-gray-500 mt-1 flex items-center"><i data-lucide="graduation-cap" class="w-4 h-4 mr-1"></i> ชั้น ป.1</div></div>
+                                    <div class="flex w-full sm:w-auto bg-gray-100 rounded-lg p-1 space-x-1"><button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-bold bg-green-500 text-white shadow-sm transition">มา</button><button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">ขาด</button><button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">ลา</button></div>
+                                </div>
+                                <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
+                                    <div><div class="font-semibold text-gray-800 text-base">ด.ญ. ใฝ่รู้ สู้ชิวิต</div><div class="text-sm text-gray-500 mt-1 flex items-center"><i data-lucide="graduation-cap" class="w-4 h-4 mr-1"></i> ชั้น ป.4</div></div>
+                                    <div class="flex w-full sm:w-auto bg-gray-100 rounded-lg p-1 space-x-1"><button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">มา</button><button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-bold bg-red-500 text-white shadow-sm transition">ขาด</button><button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">ลา</button></div>
+                                </div>
+                                <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
+                                    <div><div class="font-semibold text-gray-800 text-base">นาย สมเกียรติ ยิ่งใหญ่</div><div class="text-sm text-gray-500 mt-1 flex items-center"><i data-lucide="graduation-cap" class="w-4 h-4 mr-1"></i> ชั้น ม.2</div></div>
                                     <div class="flex w-full sm:w-auto bg-gray-100 rounded-lg p-1 space-x-1"><button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-bold bg-green-500 text-white shadow-sm transition">มา</button><button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">ขาด</button><button class="flex-1 sm:flex-none w-auto sm:w-16 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition">ลา</button></div>
                                 </div>
                             </div>
@@ -256,6 +265,12 @@
                     </div>
 
                 </div>
+                
+                <!-- FOOTER สีดำ ข้อความสีขาว -->
+                <footer class="bg-black text-white text-center py-4 text-sm mt-auto flex-shrink-0 w-full rounded-t-xl">
+                    Copyright © 2025 โรงเรียนบ้านวาเล่ย์
+                </footer>
+                
             </main>
         </div>
     </div>
