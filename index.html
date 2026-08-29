@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบบันทึกการทำเวรสี - โรงเรียนบ้านวาเล่ย์</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <!-- 1. นำเข้าไลบรารี Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -19,298 +18,185 @@
         .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Loader */
         .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3498db; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="flex h-screen bg-gray-50 text-gray-800 overflow-hidden">
+<body class="bg-gray-50 text-gray-800 overflow-hidden h-screen w-screen flex">
 
-    <!-- LOGIN SCREEN (คง Mockup ไว้ให้สลับหน้าต่างได้ง่ายๆ ก่อน) -->
-    <div id="login-screen" class="fixed inset-0 bg-blue-900 z-50 flex flex-col items-center justify-center text-white p-4">
+    <!-- ================= 1. LOGIN SCREEN ================= -->
+    <div id="login-container" class="flex flex-col items-center justify-center w-full h-full bg-blue-900 text-white p-4 absolute inset-0 z-50">
         <img src="logo.png" alt="โลโก้โรงเรียน" class="w-24 h-24 sm:w-32 sm:h-32 mb-6 bg-white rounded-full p-2 shadow-lg object-contain border-4 border-blue-400" onerror="this.src='https://placehold.co/150x150?text=Logo'">
         <h1 class="text-2xl sm:text-3xl font-bold mb-2 text-center">โรงเรียนบ้านวาเล่ย์</h1>
         <p class="text-blue-200 mb-8 text-center text-sm sm:text-base">ระบบบันทึกการทำเวรสีประจำวัน</p>
+        
         <div class="bg-white p-6 sm:p-8 rounded-xl shadow-xl w-full max-w-sm sm:max-w-md text-gray-800">
-            <h2 class="text-lg sm:text-xl font-bold text-center mb-6">เข้าสู่ระบบ</h2>
-            <div class="space-y-4">
-                <button onclick="login('student')" class="w-full flex items-center justify-center p-3 sm:p-4 bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-lg font-semibold transition">
-                    <i data-lucide="user" class="mr-2"></i> ประธานสี (ม.3) (Mock)
+            <h2 class="text-lg sm:text-xl font-bold text-center mb-6 text-blue-900">เข้าสู่ระบบ</h2>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold mb-2 text-gray-700">ชื่อผู้ใช้งาน (Username)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="user" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                        <input type="text" id="username" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="ระบุ admin, teacher, หรือ student" required>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2 text-gray-700">รหัสผ่าน (Password)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="lock" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                        <input type="password" id="password" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-transform active:scale-95 shadow-md flex justify-center items-center">
+                    เข้าสู่ระบบ
                 </button>
-                <button onclick="login('teacher')" class="w-full flex items-center justify-center p-3 sm:p-4 bg-green-100 hover:bg-green-200 text-green-900 rounded-lg font-semibold transition">
-                    <i data-lucide="users" class="mr-2"></i> ครูประจำสี (Mock)
-                </button>
-                <button onclick="login('admin')" class="w-full flex items-center justify-center p-3 sm:p-4 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded-lg font-semibold transition border-2 border-purple-500">
-                    <i data-lucide="database" class="mr-2"></i> แอดมิน (เชื่อม Supabase ข้อมูลจริง)
-                </button>
+            </form>
+            <div class="mt-4 text-xs text-center text-gray-500">
+                <p>Username ทดสอบ: <strong>admin</strong>, <strong>teacher</strong>, <strong>student</strong></p>
+                <p>(รหัสผ่านใส่อะไรก็ได้)</p>
             </div>
         </div>
     </div>
 
-    <!-- MAIN APP -->
-    <div id="mobile-overlay" class="mobile-overlay" onclick="toggleSidebar()"></div>
+    <!-- ================= 2. MAIN APP CONTAINER ================= -->
+    <div id="app-container" class="hidden flex h-full w-full relative">
+        
+        <!-- Mobile Overlay -->
+        <div id="mobile-overlay" class="mobile-overlay" onclick="toggleSidebar()"></div>
 
-    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 bg-blue-900 text-white w-64 transition-all duration-300 flex flex-col flex-shrink-0 shadow-2xl md:shadow-lg z-50">
-        <div class="flex items-center justify-between md:justify-center h-16 px-4 md:px-0 border-b border-blue-800">
-            <span class="font-bold text-lg menu-text truncate">เมนูหลัก</span>
-            <button onclick="toggleSidebar()" class="md:hidden p-2 text-white hover:bg-blue-800 rounded-lg"><i data-lucide="x"></i></button>
-        </div>
-        <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-2 overflow-y-auto"></nav>
-        <div class="p-4 border-t border-blue-800">
-            <button onclick="logout()" class="flex items-center w-full p-3 rounded-lg hover:bg-red-600 transition-colors text-left group">
-                <i data-lucide="log-out" class="min-w-[24px] group-hover:scale-110 transition-transform"></i>
-                <span class="ml-3 menu-text font-medium truncate">ออกจากระบบ</span>
-            </button>
-        </div>
-    </aside>
-
-    <div id="main-content" class="flex-1 flex flex-col min-w-0 bg-gray-50">
-        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-6 z-10 flex-shrink-0 sticky top-0">
-            <div class="flex items-center min-w-0">
-                <button onclick="toggleSidebar()" class="p-2 mr-2 md:mr-4 text-blue-900 hover:bg-gray-100 rounded-lg transition-colors"><i data-lucide="menu"></i></button>
-                <img src="logo.png" alt="โลโก้" class="h-8 w-8 sm:h-10 sm:w-10 object-contain mr-2 sm:mr-3 rounded-full border border-gray-200" onerror="this.src='https://placehold.co/150x150?text=Logo'">
-                <h1 class="text-base sm:text-lg lg:text-xl font-bold text-blue-900 truncate">ระบบเวรสี โรงเรียนบ้านวาเล่ย์</h1>
+        <!-- Left Sidebar -->
+        <aside id="sidebar" class="fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 bg-blue-900 text-white w-64 transition-all duration-300 flex flex-col flex-shrink-0 shadow-2xl md:shadow-lg z-50 h-full">
+            <div class="flex items-center justify-between md:justify-center h-16 px-4 md:px-0 border-b border-blue-800">
+                <span class="font-bold text-lg menu-text truncate">เมนูหลัก</span>
+                <button onclick="toggleSidebar()" class="md:hidden p-2 text-white hover:bg-blue-800 rounded-lg"><i data-lucide="x"></i></button>
             </div>
-            <div class="flex items-center flex-shrink-0 ml-4">
-                <div class="text-right mr-3 hidden md:block">
-                    <div id="user-name" class="text-sm font-bold text-blue-900">ชื่อผู้ใช้</div>
-                    <div id="user-role" class="text-xs text-gray-500">ตำแหน่ง</div>
-                </div>
-                <div id="user-avatar" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 border-2 border-blue-900 flex items-center justify-center text-blue-900 font-bold">U</div>
+            <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-2 overflow-y-auto"></nav>
+            <div class="p-4 border-t border-blue-800">
+                <button onclick="logout()" class="flex items-center w-full p-3 rounded-lg hover:bg-red-600 transition-colors text-left group">
+                    <i data-lucide="log-out" class="min-w-[24px] group-hover:scale-110 transition-transform"></i>
+                    <span class="ml-3 menu-text font-medium truncate">ออกจากระบบ</span>
+                </button>
             </div>
-        </header>
+        </aside>
 
-        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
-            <div class="max-w-7xl mx-auto w-full pb-20">
-                
-                <!-- STUDENT & TEACHER MOCKUP (ซ่อนไว้ก่อน เพื่อโฟกัสที่ Admin) -->
-                <div id="view-student-dash" class="view-section">
-                    <div class="bg-blue-100 p-4 rounded-xl text-blue-900 text-center font-bold">หน้าประธานสี (ส่วนนี้ยังใช้ Mockup อยู่)</div>
+        <!-- Main Content Area -->
+        <div id="main-content" class="flex-1 flex flex-col min-w-0 bg-gray-50 h-full">
+            <header class="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-6 z-10 flex-shrink-0 sticky top-0">
+                <div class="flex items-center min-w-0">
+                    <button onclick="toggleSidebar()" class="p-2 mr-2 md:mr-4 text-blue-900 hover:bg-gray-100 rounded-lg transition-colors"><i data-lucide="menu"></i></button>
+                    <img src="logo.png" alt="โลโก้" class="h-8 w-8 sm:h-10 sm:w-10 object-contain mr-2 sm:mr-3 rounded-full border border-gray-200" onerror="this.src='https://placehold.co/150x150?text=Logo'">
+                    <h1 class="text-base sm:text-lg lg:text-xl font-bold text-blue-900 truncate">ระบบเวรสี โรงเรียนบ้านวาเล่ย์</h1>
                 </div>
-                <div id="view-student-checkin" class="view-section">
-                    <div class="bg-blue-100 p-4 rounded-xl text-blue-900 text-center font-bold">หน้าเช็คชื่อ (ส่วนนี้ยังใช้ Mockup อยู่)</div>
-                </div>
-                <div id="view-teacher-dash" class="view-section">
-                    <div class="bg-green-100 p-4 rounded-xl text-green-900 text-center font-bold">หน้าครู (ส่วนนี้ยังใช้ Mockup อยู่)</div>
-                </div>
-
-                <!-- ================= 4. ADMIN DASHBOARD (REAL DATA) ================= -->
-                <div id="view-admin-dash" class="view-section">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
-                        <div>
-                            <h2 class="text-xl sm:text-2xl font-bold text-blue-900 flex items-center">
-                                <i data-lucide="database" class="mr-2"></i> ภาพรวมระดับโรงเรียน (ข้อมูลจริง)
-                            </h2>
-                            <p class="text-gray-600 text-sm sm:text-base mt-1">ข้อมูลประจำวันที่ <span id="admin-date" class="font-semibold"></span></p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="loadAdminData()" class="bg-blue-100 text-blue-800 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center hover:bg-blue-200 transition">
-                                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2" id="refresh-icon"></i> รีเฟรชข้อมูล
-                            </button>
-                        </div>
+                <div class="flex items-center flex-shrink-0 ml-4">
+                    <div class="text-right mr-3 hidden md:block">
+                        <div id="user-name" class="text-sm font-bold text-blue-900">ชื่อผู้ใช้</div>
+                        <div id="user-role" class="text-xs text-gray-500">ตำแหน่ง</div>
                     </div>
+                    <div id="user-avatar" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 border-2 border-blue-900 flex items-center justify-center text-blue-900 font-bold">U</div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
+                <div class="max-w-7xl mx-auto w-full pb-20">
                     
-                    <!-- ส่วนแสดงตัวเลขสถิติ (รอรับค่าจาก DB) -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8" id="admin-stats-container">
-                        <div class="col-span-4 bg-white p-8 rounded-2xl shadow-sm text-center flex flex-col items-center justify-center text-gray-500">
-                            <div class="loader mb-4"></div>
-                            กำลังเชื่อมต่อฐานข้อมูล Supabase...
-                        </div>
+                    <!-- MOCKUP VIEWS -->
+                    <div id="view-student-dash" class="view-section">
+                        <div class="bg-blue-100 p-4 rounded-xl text-blue-900 text-center font-bold">หน้าประธานสี (Mockup)</div>
+                    </div>
+                    <div id="view-student-checkin" class="view-section">
+                        <div class="bg-blue-100 p-4 rounded-xl text-blue-900 text-center font-bold">หน้าเช็คชื่อ (Mockup)</div>
+                    </div>
+                    <div id="view-teacher-dash" class="view-section">
+                        <div class="bg-green-100 p-4 rounded-xl text-green-900 text-center font-bold">หน้าครู (Mockup)</div>
                     </div>
 
-                    <!-- ส่วนแสดงตารางสถานะสี (รอรับค่าจาก DB) -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="p-4 sm:p-5 border-b bg-gray-50 font-bold text-gray-800 flex justify-between items-center">
-                            <span>สถานะการส่งเวรสีทั้งหมด (วันนี้)</span>
-                            <span class="bg-white border text-xs px-2 py-1 rounded text-green-600 font-bold flex items-center">
-                                <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div> Live
-                            </span>
+                    <!-- ADMIN DASHBOARD (REAL DATA) -->
+                    <div id="view-admin-dash" class="view-section">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-bold text-blue-900 flex items-center">
+                                    <i data-lucide="database" class="mr-2"></i> ภาพรวมระดับโรงเรียน
+                                </h2>
+                                <p class="text-gray-600 text-sm sm:text-base mt-1">ข้อมูลประจำวันที่ <span id="admin-date" class="font-semibold"></span></p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="loadAdminData()" class="bg-blue-100 text-blue-800 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center hover:bg-blue-200 transition">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4 mr-2" id="refresh-icon"></i> รีเฟรชข้อมูล
+                                </button>
+                            </div>
                         </div>
                         
-                        <!-- Desktop Table -->
-                        <div class="hidden md:block overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="text-sm text-gray-500 border-b bg-white">
-                                        <th class="p-4 font-semibold">กลุ่มสี</th>
-                                        <th class="p-4 font-semibold">พื้นที่รับผิดชอบ</th>
-                                        <th class="p-4 font-semibold">จำนวนสมาชิก</th>
-                                        <th class="p-4 font-semibold">สถานะส่งเวร (วันนี้)</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100 bg-white" id="admin-table-desktop">
-                                    <tr><td colspan="4" class="p-8 text-center text-gray-500">รอการโหลดข้อมูล...</td></tr>
-                                </tbody>
-                            </table>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8" id="admin-stats-container">
+                            <div class="col-span-4 bg-white p-8 rounded-2xl shadow-sm text-center flex flex-col items-center justify-center text-gray-500">
+                                <div class="loader mb-4"></div>กำลังเชื่อมต่อฐานข้อมูล Supabase...
+                            </div>
                         </div>
 
-                        <!-- Mobile List -->
-                        <div class="md:hidden divide-y divide-gray-100 bg-white" id="admin-table-mobile">
-                            <div class="p-8 text-center text-gray-500">รอการโหลดข้อมูล...</div>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-4 sm:p-5 border-b bg-gray-50 font-bold text-gray-800 flex justify-between items-center">
+                                <span>สถานะการส่งเวรสีทั้งหมด (วันนี้)</span>
+                                <span class="bg-white border text-xs px-2 py-1 rounded text-green-600 font-bold flex items-center">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div> Live
+                                </span>
+                            </div>
+                            
+                            <div class="hidden md:block overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="text-sm text-gray-500 border-b bg-white">
+                                            <th class="p-4 font-semibold">กลุ่มสี</th>
+                                            <th class="p-4 font-semibold">พื้นที่รับผิดชอบ</th>
+                                            <th class="p-4 font-semibold">จำนวนสมาชิก</th>
+                                            <th class="p-4 font-semibold">สถานะส่งเวร (วันนี้)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 bg-white" id="admin-table-desktop">
+                                        <tr><td colspan="4" class="p-8 text-center text-gray-500">รอการโหลดข้อมูล...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="md:hidden divide-y divide-gray-100 bg-white" id="admin-table-mobile">
+                                <div class="p-8 text-center text-gray-500">รอการโหลดข้อมูล...</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-            </div>
-        </main>
+                </div>
+            </main>
+        </div>
     </div>
 
     <script>
         // ==========================================
-        // 2. การตั้งค่า Supabase (นำค่ามาจากโปรเจกต์ของคุณมาใส่ที่นี่)
+        // Supabase Setup
         // ==========================================
-        const SUPABASE_URL = 'https://okzoztxzempdxuuskvab.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rem96dHh6ZW1wZHh1dXNrdmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5NTk1OTQsImV4cCI6MjEwMzUzNTU5NH0.XbqAOzztdbALWg5Gh21PiMRG9L7WOLRg7C-dAh7kOxw';
-        
-        // ตรวจสอบว่าใส่ค่าหรือยัง
+        const SUPABASE_URL = 'ใส่_SUPABASE_URL_ของคุณที่นี่';
+        const SUPABASE_ANON_KEY = 'ใส่_SUPABASE_ANON_KEY_ของคุณที่นี่';
         const isSupabaseConfigured = SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20;
         let supabaseClient = null;
-        
-        if (isSupabaseConfigured) {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
+        if (isSupabaseConfigured) supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ==========================================
-        // ฟังก์ชันดึงข้อมูลจริงมาแสดงในหน้า Admin
+        // Login Logic
         // ==========================================
-        async function loadAdminData() {
-            if (!isSupabaseConfigured) {
-                renderConfigError();
-                return;
-            }
-
-            try {
-                // หมุนไอคอนรีเฟรช
-                const refreshIcon = document.getElementById('refresh-icon');
-                if(refreshIcon) refreshIcon.classList.add('animate-spin');
-
-                // ดึงข้อมูล 3 อย่างพร้อมกันจากตารางที่คุณสร้างไว้ใน SQL
-                // 1. ดึงกลุ่มสีทั้งหมด
-                const { data: colors, error: colorErr } = await supabaseClient.from('colors').select('*');
-                // 2. นับจำนวนนักเรียนทั้งหมด (เพื่อความรวดเร็วใช้ count)
-                const { count: studentCount, error: studentErr } = await supabaseClient.from('students').select('*', { count: 'exact', head: true });
-                // 3. ดึงเวรที่ส่งแล้วของ "วันนี้"
-                const todayIso = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-                const { data: todayLogs, error: logErr } = await supabaseClient.from('duty_logs').select('color_id, status').eq('duty_date', todayIso);
-
-                if (colorErr || studentErr || logErr) throw new Error("ดึงข้อมูลล้มเหลว ตรวจสอบ RLS หรือชื่อตาราง");
-
-                // ประมวลผลข้อมูล
-                const totalStudents = studentCount || 0;
-                const totalColors = colors ? colors.length : 0;
-                const submittedLogs = todayLogs || [];
-                const submittedCount = submittedLogs.length;
-
-                // อัปเดต HTML ส่วนตัวเลขสถิติ (Cards)
-                renderAdminStats(totalStudents, totalColors, submittedCount);
-                
-                // อัปเดตตารางสถานะสี
-                renderAdminTable(colors || [], submittedLogs);
-
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                alert("เกิดข้อผิดพลาดในการดึงข้อมูลจาก Supabase: " + error.message);
-            } finally {
-                const refreshIcon = document.getElementById('refresh-icon');
-                if(refreshIcon) refreshIcon.classList.remove('animate-spin');
-            }
-        }
-
-        function renderAdminStats(students, colorsCount, submitted) {
-            const container = document.getElementById('admin-stats-container');
-            const notSubmitted = colorsCount - submitted;
+        function handleLogin(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('username').value.toLowerCase().trim();
             
-            container.innerHTML = `
-                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
-                    <div class="w-10 h-10 mx-auto bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-2"><i data-lucide="users" class="w-5 h-5"></i></div>
-                    <div class="text-gray-500 text-xs sm:text-sm mb-1">นักเรียนทั้งหมด</div>
-                    <div class="text-xl sm:text-2xl font-bold text-blue-900">${students} <span class="text-sm font-normal text-gray-500">คน</span></div>
-                </div>
-                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
-                    <div class="w-10 h-10 mx-auto bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-2"><i data-lucide="palette" class="w-5 h-5"></i></div>
-                    <div class="text-gray-500 text-xs sm:text-sm mb-1">กลุ่มสี</div>
-                    <div class="text-xl sm:text-2xl font-bold text-purple-600">${colorsCount} <span class="text-sm font-normal text-gray-500">สี</span></div>
-                </div>
-                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
-                    <div class="w-10 h-10 mx-auto bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-2"><i data-lucide="check-circle" class="w-5 h-5"></i></div>
-                    <div class="text-gray-500 text-xs sm:text-sm mb-1">ส่งเวรแล้ววันนี้</div>
-                    <div class="text-xl sm:text-2xl font-bold text-green-600">${submitted}<span class="text-sm text-gray-400 font-normal">/${colorsCount}</span></div>
-                </div>
-                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
-                    <div class="w-10 h-10 mx-auto bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-2"><i data-lucide="x-circle" class="w-5 h-5"></i></div>
-                    <div class="text-gray-500 text-xs sm:text-sm mb-1">ยังไม่ส่งเวร</div>
-                    <div class="text-xl sm:text-2xl font-bold text-red-600">${notSubmitted < 0 ? 0 : notSubmitted}</div>
-                </div>
-            `;
-            lucide.createIcons();
-        }
-
-        async function renderAdminTable(colors, submittedLogs) {
-            const desktopTable = document.getElementById('admin-table-desktop');
-            const mobileTable = document.getElementById('admin-table-mobile');
-            
-            let desktopHTML = '';
-            let mobileHTML = '';
-
-            if (colors.length === 0) {
-                desktopHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">ไม่มีข้อมูลกลุ่มสีในฐานข้อมูล กรุณาเพิ่มข้อมูลในตาราง colors</td></tr>`;
-                mobileHTML = `<div class="p-8 text-center text-gray-500">ไม่มีข้อมูลกลุ่มสี</div>`;
-            } else {
-                // Loop สร้าง HTML สำหรับแต่ละสี
-                for (const color of colors) {
-                    // เช็คว่าสีนี้ส่งเวรวันนี้หรือยัง
-                    const isSubmitted = submittedLogs.find(log => log.color_id === color.id);
-                    const statusBadge = isSubmitted 
-                        ? `<span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-md text-xs font-bold border border-green-200">ส่งแล้ว</span>` 
-                        : `<span class="bg-gray-100 text-gray-500 px-2.5 py-1 rounded-md text-xs font-bold border border-gray-200">ยังไม่ส่ง</span>`;
-
-                    // นำข้อมูลจริงมาแสดง
-                    desktopHTML += `
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold flex items-center" style="color: ${color.hex_code || '#333'}">
-                                <div class="w-3 h-3 rounded-full mr-2 shadow-sm" style="background-color: ${color.hex_code || '#ccc'}"></div> ${color.name}
-                            </td>
-                            <td class="p-4 text-sm text-gray-600">พื้นที่รับผิดชอบ (ดึงจากตาราง zones ในอนาคต)</td>
-                            <td class="p-4 text-sm text-gray-500">รอดึงจาก relation</td>
-                            <td class="p-4">${statusBadge}</td>
-                        </tr>
-                    `;
-
-                    mobileHTML += `
-                        <div class="p-4 hover:bg-gray-50">
-                            <div class="flex justify-between items-center mb-2">
-                                <div class="font-bold flex items-center" style="color: ${color.hex_code || '#333'}">
-                                    <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${color.hex_code || '#ccc'}"></div> ${color.name}
-                                </div>
-                                ${statusBadge}
-                            </div>
-                            <div class="text-sm text-gray-600 mb-2">พื้นที่รับผิดชอบ (อัปเดตภายหลัง)</div>
-                        </div>
-                    `;
-                }
+            if (usernameInput === 'admin') login('admin');
+            else if (usernameInput === 'teacher') login('teacher');
+            else if (usernameInput === 'student') login('student');
+            else {
+                alert('ชื่อผู้ใช้งานไม่ถูกต้อง (กรุณาใช้ admin, teacher หรือ student)');
+                document.getElementById('password').value = '';
             }
-
-            desktopTable.innerHTML = desktopHTML;
-            mobileTable.innerHTML = mobileHTML;
         }
 
-        function renderConfigError() {
-            const errorMsg = `
-                <div class="col-span-4 bg-red-50 border-2 border-red-200 p-8 rounded-2xl text-center flex flex-col items-center justify-center">
-                    <i data-lucide="alert-triangle" class="w-12 h-12 text-red-500 mb-3"></i>
-                    <h3 class="text-xl font-bold text-red-800 mb-2">ยังไม่ได้เชื่อมต่อฐานข้อมูล</h3>
-                    <p class="text-red-600">กรุณาเปิดไฟล์ <code>index.html</code> และนำ URL และ Anon Key จาก Supabase มาใส่ในบรรทัดที่ 460</p>
-                </div>
-            `;
-            document.getElementById('admin-stats-container').innerHTML = errorMsg;
-            document.getElementById('admin-table-desktop').innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">กรุณาตั้งค่า Supabase ก่อน</td></tr>`;
-            document.getElementById('admin-table-mobile').innerHTML = `<div class="p-8 text-center text-red-500">กรุณาตั้งค่า Supabase ก่อน</div>`;
-            lucide.createIcons();
-        }
-
-        // ==========================================
-        // UI Navigation & Base Setup
-        // ==========================================
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById('admin-date').innerText = new Date().toLocaleDateString('th-TH', options);
 
@@ -324,7 +210,8 @@
         };
 
         function login(role) {
-            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
             const nav = document.getElementById('sidebar-nav');
             
             if (role === 'admin') {
@@ -333,12 +220,11 @@
                 document.getElementById('user-avatar').innerText = 'A';
                 nav.innerHTML = menus.admin;
                 switchView('view-admin-dash');
-                loadAdminData(); // โหลดข้อมูลจริงทันทีที่เข้าหน้า Admin
+                loadAdminData(); 
             } else {
-                // ... (Mockup Setup for other roles) ...
-                document.getElementById('user-name').innerText = 'โหมดทดสอบ';
+                document.getElementById('user-name').innerText = role === 'student' ? 'ประธานสีน้ำเงิน' : 'ครูประจำสี';
                 document.getElementById('user-role').innerText = role;
-                document.getElementById('user-avatar').innerText = '?';
+                document.getElementById('user-avatar').innerText = role === 'student' ? 'ส' : 'ค';
                 nav.innerHTML = menus[role];
                 switchView(`view-${role}-dash`);
             }
@@ -346,10 +232,18 @@
         }
 
         function logout() {
-            if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('mobile-overlay').classList.remove('active'); }
-            document.getElementById('login-screen').style.display = 'flex';
+            if(window.innerWidth < 768) { 
+                document.getElementById('sidebar').classList.add('-translate-x-full'); 
+                document.getElementById('mobile-overlay').classList.remove('active'); 
+            }
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('login-container').classList.remove('hidden');
+            document.getElementById('login-form').reset();
         }
 
+        // ==========================================
+        // View & Sidebar Management
+        // ==========================================
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
@@ -361,6 +255,69 @@
             const overlay = document.getElementById('mobile-overlay');
             if (window.innerWidth < 768) { sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('active'); } 
             else { sidebar.classList.toggle('sidebar-collapsed'); }
+        }
+
+        // ==========================================
+        // Supabase Data Fetching (Admin)
+        // ==========================================
+        async function loadAdminData() {
+            if (!isSupabaseConfigured) return renderConfigError();
+            try {
+                const refreshIcon = document.getElementById('refresh-icon');
+                if(refreshIcon) refreshIcon.classList.add('animate-spin');
+
+                const { data: colors, error: colorErr } = await supabaseClient.from('colors').select('*');
+                const { count: studentCount, error: studentErr } = await supabaseClient.from('students').select('*', { count: 'exact', head: true });
+                const todayIso = new Date().toISOString().split('T')[0];
+                const { data: todayLogs, error: logErr } = await supabaseClient.from('duty_logs').select('color_id, status').eq('duty_date', todayIso);
+
+                if (colorErr || studentErr || logErr) throw new Error("ดึงข้อมูลล้มเหลว");
+
+                renderAdminStats(studentCount || 0, colors ? colors.length : 0, todayLogs ? todayLogs.length : 0);
+                renderAdminTable(colors || [], todayLogs || []);
+            } catch (error) {
+                console.error("Error:", error);
+                alert("ข้อผิดพลาด Supabase: " + error.message);
+            } finally {
+                const refreshIcon = document.getElementById('refresh-icon');
+                if(refreshIcon) refreshIcon.classList.remove('animate-spin');
+            }
+        }
+
+        function renderAdminStats(students, colorsCount, submitted) {
+            const notSubmitted = colorsCount - submitted;
+            document.getElementById('admin-stats-container').innerHTML = `
+                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center"><div class="w-10 h-10 mx-auto bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-2"><i data-lucide="users" class="w-5 h-5"></i></div><div class="text-gray-500 text-xs sm:text-sm mb-1">นักเรียนทั้งหมด</div><div class="text-xl sm:text-2xl font-bold text-blue-900">${students}</div></div>
+                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center"><div class="w-10 h-10 mx-auto bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-2"><i data-lucide="palette" class="w-5 h-5"></i></div><div class="text-gray-500 text-xs sm:text-sm mb-1">กลุ่มสี</div><div class="text-xl sm:text-2xl font-bold text-purple-600">${colorsCount}</div></div>
+                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center"><div class="w-10 h-10 mx-auto bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-2"><i data-lucide="check-circle" class="w-5 h-5"></i></div><div class="text-gray-500 text-xs sm:text-sm mb-1">ส่งเวรแล้ววันนี้</div><div class="text-xl sm:text-2xl font-bold text-green-600">${submitted}</div></div>
+                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 text-center"><div class="w-10 h-10 mx-auto bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-2"><i data-lucide="x-circle" class="w-5 h-5"></i></div><div class="text-gray-500 text-xs sm:text-sm mb-1">ยังไม่ส่งเวร</div><div class="text-xl sm:text-2xl font-bold text-red-600">${notSubmitted < 0 ? 0 : notSubmitted}</div></div>
+            `;
+            lucide.createIcons();
+        }
+
+        async function renderAdminTable(colors, submittedLogs) {
+            let desktopHTML = ''; let mobileHTML = '';
+            if (colors.length === 0) {
+                desktopHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">ไม่มีข้อมูลกลุ่มสี</td></tr>`;
+                mobileHTML = `<div class="p-8 text-center text-gray-500">ไม่มีข้อมูลกลุ่มสี</div>`;
+            } else {
+                for (const color of colors) {
+                    const isSubmitted = submittedLogs.find(log => log.color_id === color.id);
+                    const statusBadge = isSubmitted ? `<span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-md text-xs font-bold border border-green-200">ส่งแล้ว</span>` : `<span class="bg-gray-100 text-gray-500 px-2.5 py-1 rounded-md text-xs font-bold border border-gray-200">ยังไม่ส่ง</span>`;
+                    desktopHTML += `<tr class="hover:bg-gray-50 transition"><td class="p-4 font-bold flex items-center" style="color: ${color.hex_code || '#333'}"><div class="w-3 h-3 rounded-full mr-2 shadow-sm" style="background-color: ${color.hex_code || '#ccc'}"></div> ${color.name}</td><td class="p-4 text-sm text-gray-600">พื้นที่รับผิดชอบ</td><td class="p-4 text-sm text-gray-500">-</td><td class="p-4">${statusBadge}</td></tr>`;
+                    mobileHTML += `<div class="p-4 hover:bg-gray-50"><div class="flex justify-between items-center mb-2"><div class="font-bold flex items-center" style="color: ${color.hex_code || '#333'}"><div class="w-3 h-3 rounded-full mr-2" style="background-color: ${color.hex_code || '#ccc'}"></div> ${color.name}</div>${statusBadge}</div><div class="text-sm text-gray-600 mb-2">พื้นที่รับผิดชอบ</div></div>`;
+                }
+            }
+            document.getElementById('admin-table-desktop').innerHTML = desktopHTML;
+            document.getElementById('admin-table-mobile').innerHTML = mobileHTML;
+        }
+
+        function renderConfigError() {
+            const errorMsg = `<div class="col-span-4 bg-red-50 border-2 border-red-200 p-8 rounded-2xl text-center flex flex-col items-center justify-center"><i data-lucide="alert-triangle" class="w-12 h-12 text-red-500 mb-3"></i><h3 class="text-xl font-bold text-red-800 mb-2">ยังไม่ได้เชื่อมต่อฐานข้อมูล</h3><p class="text-red-600">กรุณานำ URL และ Anon Key จาก Supabase มาใส่ในโค้ดบรรทัดที่ 261</p></div>`;
+            document.getElementById('admin-stats-container').innerHTML = errorMsg;
+            document.getElementById('admin-table-desktop').innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">กรุณาตั้งค่า Supabase ก่อน</td></tr>`;
+            document.getElementById('admin-table-mobile').innerHTML = `<div class="p-8 text-center text-red-500">กรุณาตั้งค่า Supabase ก่อน</div>`;
+            lucide.createIcons();
         }
         lucide.createIcons();
     </script>
